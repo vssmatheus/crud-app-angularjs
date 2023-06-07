@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html ng-app="crudApp">
+  <head>
+    <link rel="stylesheet" href="./styles/styles.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.9/angular.min.js"></script>
+    <script>
+      var app = angular.module("crudApp", []);
+      app.controller("carroController", function ($scope, $http) {
+        $scope.carros = [];
+        $scope.idCounter = 1;
+
+        $http.get("http://localhost:8080/carros").then(function (response) {
+          $scope.carros = response.data;
+          console.log(response.data);
+        });
+
+        $scope.addCar = function () {
+          var newCar = {
+            id: $scope.idCounter,
+            marca: $scope.newCarMarca,
+            modelo: $scope.newCarModelo,
+          };
+
+          // Remove o campo $$hashKey
+          delete newCar.$$hashKey;
+
+          $http
+            .post("http://localhost:8080/carros", newCar)
+            .then(function (response) {
+              $scope.carros.push(response.data);
+              $scope.newCarMarca = "";
+              $scope.newCarModelo = "";
+              $scope.idCounter++;
+            });
+        };
+
+        $scope.editCar = function (car) {
+          $scope.currentCar = car;
+          $scope.updatedCarMarca = car.marca;
+          $scope.updatedCarModelo = car.modelo;
+        };
+
+        $scope.updateCar = function () {
+          $scope.currentCar.marca = $scope.updatedCarMarca;
+          $scope.currentCar.modelo = $scope.updatedCarModelo;
+          $scope.currentCar = null;
+          $scope.updatedCarMarca = "";
+          $scope.updatedCarModelo = "";
+        };
+
+        $scope.deleteCar = function (car) {
+          var index = $scope.carros.indexOf(car);
+
+          $http
+            .delete("http://localhost:8080/carros/" + car.id)
+            .then(function (response) {
+              $scope.carros.splice(index, 1);
+            });
+        };
+      });
+    </script>
+  </head>
+
+  <body ng-controller="carroController">
+    <section class="content">
+      <h2>Lista de Carros</h2>
+      <table>
+        <tr>
+          <th>ID</th>
+          <th>Marca</th>
+          <th>Modelo</th>
+          <th>Ações</th>
+        </tr>
+        <tr ng-repeat="carro in carros">
+          <td>{{ carro.id }}</td>
+          <td>{{ carro.marca }}</td>
+          <td>{{ carro.modelo }}</td>
+          <td>
+            <button ng-click="editCar(carro)">Editar</button>
+            <button ng-click="deleteCar(carro)">Excluir</button>
+          </td>
+        </tr>
+      </table>
+
+      <h2>Adicionar Carro</h2>
+      <form>
+        <label>Marca:</label>
+        <input type="text" ng-model="newCarMarca" required />
+        <br />
+        <label>Modelo:</label>
+        <input type="text" ng-model="newCarModelo" required />
+        <br />
+        <button ng-click="addCar()" ng-disabled="!newCarMarca || !newCarModelo">
+          Adicionar
+        </button>
+      </form>
+
+      <h2>Editar Carro</h2>
+      <form ng-show="currentCar">
+        <label>Mardca:</label>
+        <input type="text" ng-model="updatedCarMarca" required />
+        <br />
+        <label>Modelo:</label>
+        <input type="text" ng-model="updatedCarModelo" required />
+        <br />
+        <button
+          ng-click="updateCar()"
+          ng-disabled="!updatedCarMarca || !updatedCarModelo">
+          Atualizar
+        </button>
+      </form>
+    </section>
+  </body>
+</html>
